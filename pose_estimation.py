@@ -1,4 +1,5 @@
 import cv2
+print(cv2.__version__)
 import numpy as np
 from picamera2 import Picamera2
 
@@ -91,8 +92,12 @@ while True:
                 # Convert orientation to Euler angles in degrees
                 euler_angles = rotation_matrix_to_euler(R_inv)
 
+                x_cam = t_inv_cm[0][0]
+                y_cam = t_inv_cm[1][0]
+                yaw_cam = euler_angles[2]
+
                 # Format the pose text
-                text = f"ID {ids[i][0]}: Pos [{t_inv_cm[0][0]:.1f}, {t_inv_cm[1][0]:.1f}, {t_inv_cm[2][0]:.1f}] cm, Rot [{euler_angles[0]:.1f}, {euler_angles[1]:.1f}, {euler_angles[2]:.1f}] deg"
+                text = f"X[{x_cam:.1f} cm, Y[{y_cam[1][0]:.1f}] cm, Yaw[{yaw_cam:.1f}] deg"
                 pose_texts.append(text)
 
                 # Draw coordinate axes on the marker (optional visualization)

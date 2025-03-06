@@ -3,6 +3,7 @@ print(cv2.__version__)
 import numpy as np
 from picamera2 import Picamera2
 
+
 # Function to compute Euler angles from a rotation matrix (ZYX convention) in degrees
 def rotation_matrix_to_euler(R):
     """Convert a 3x3 rotation matrix to Euler angles (roll, pitch, yaw) in degrees."""

@@ -98,7 +98,7 @@ while True:
                 yaw_cam = euler_angles[2]
 
                 # Format the pose text
-                text = f"X[{x_cam:.1f} cm, Y[{y_cam[1][0]:.1f}] cm, Yaw[{yaw_cam:.1f}] deg"
+                text = f"X[{x_cam:.1f} cm, Y[{y_cam:.1f}] cm, Yaw[{yaw_cam:.1f}] deg"
                 pose_texts.append(text)
 
                 # Draw coordinate axes on the marker (optional visualization)

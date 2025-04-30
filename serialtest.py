@@ -8,6 +8,8 @@ import time
 SERIAL_PORT = '/dev/ttyAMA0'  # Explicitly use ttyAMA0 as the UART device
 BAUD_RATE = 115200            # Common baud rate for testing
 
+
+
 # Function to compute Euler angles from a rotation matrix (ZYX convention) in degrees
 def rotation_matrix_to_euler(R):
     """Convert a 3x3 rotation matrix to Euler angles (roll, pitch, yaw) in degrees."""
@@ -73,6 +75,7 @@ print("Camera started. Press 'q' to stop (if display is available).")
 while True:
     # Capture frame from Picamera2
     frame = picam2.capture_array()
+
     if frame is None:
         print("Error: Could not read frame.")
         break
@@ -103,9 +106,9 @@ while True:
                 # Convert orientation to Euler angles in degrees
                 euler_angles = rotation_matrix_to_euler(R_inv)
 
-                x_cam = t_inv_cm[0][0]
+                x_cam = -t_inv_cm[0][0]
                 y_cam = t_inv_cm[1][0]
-                yaw_cam = euler_angles[2]
+                yaw_cam = -euler_angles[2]
 
                 # Send x_cam, y_cam, yaw_cam over serial
                 data_str = f"{x_cam:.1f},{y_cam:.1f},{yaw_cam:.1f}\n"

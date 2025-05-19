@@ -14,7 +14,7 @@ BAUD_RATE     = 115_200
 RESOLUTION    = (160, 120)         # Lower resolution for Pi 3B
 MAX_CORNERS   = 80                 # Fewer points to track
 REFRESH_EVERY = 60                 # More frequent reseeds
-SHOW_PREVIEW  = True              # Set to True to use cv.imshow
+SHOW_PREVIEW  = False              # Set to True to use cv.imshow
 WINDOW_NAME   = "PiCam2 Optical Flow"
 
 # ---------- graceful exit ----------
@@ -35,8 +35,11 @@ picam2 = Picamera2()
 video_cfg = picam2.create_video_configuration(
     main={"size": RESOLUTION, "format": "RGB888"})
 picam2.configure(video_cfg)
-if not SHOW_PREVIEW:
-    picam2.start_preview(Preview.DRM)  # Non-GUI preview
+if SHOW_PREVIEW:
+    picam2.start_preview(Preview.QTGL)  # or leave it out if using OpenCV's imshow
+else:
+    picam2.start_preview(Preview.NULL)  # headless dummy preview
+
 picam2.start()
 
 # ---------- initial frame & features ----------

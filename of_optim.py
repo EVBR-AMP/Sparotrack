@@ -5,7 +5,7 @@ RESOLUTION = (224, 160)
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     lores={'size': RESOLUTION, 'format': 'YUV420'},
-    main={'size': (640, 480), 'format': 'RGB888'},
+    main={'size': (640, 480), 'format': 'RGB565'},
     display='main',
     buffer_count=4
 )

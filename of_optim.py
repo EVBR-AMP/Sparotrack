@@ -11,7 +11,7 @@ SHUTTER_US = 8000           # < 8333 µs for 120 fps
 GAIN = 4.0                  # raise if image dark
 
 SERIAL_PORT = "/dev/ttyAMA0"
-BAUD = 115200
+BAUD = 921600
 # ------------------------------------------------------------
 
 # ---------- Serial setup ----------
@@ -67,7 +67,7 @@ def flow_cb(req):
             flow = p1[st == 1] - p0[st == 1]
             if flow.size:
                 dx, dy = np.mean(flow, axis=0)
-                vx, vy = dx / dt, dy / dt
+                vy, vx = dx / dt, dy / dt
                 print(f"vx:{vx:7.2f}  vy:{vy:7.2f}")
 
                 # UART output

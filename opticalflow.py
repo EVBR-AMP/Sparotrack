@@ -9,8 +9,8 @@ import time, serial, sys, signal
 from picamera2 import Picamera2, Preview
 
 # ---------- user settings ----------
-SERIAL_PORT   = "/dev/serial0"
-BAUD_RATE     = 115_200
+SERIAL_PORT   = "/dev/ttyAMA0"
+BAUD_RATE     = 921600
 RESOLUTION    = (160, 120)         # Lower resolution for Pi 3B
 MAX_CORNERS   = 80                 # Fewer points to track
 REFRESH_EVERY = 60                 # More frequent reseeds

@@ -67,7 +67,14 @@ while True:
         dt = now - prev_time
         if dt > 0:
             vy, vx = dx / dt, dy / dt
-            ser.write(f"{vx:.2f},{vy:.2f}\n".encode())
+            # ser.write(f"{vx:.2f},{vy:.2f}\n".encode('utf-8'))
+            # Send x_cam, y_cam, yaw_cam over serial
+            data_str = f"{vx:.2f},{vy:.1f}\n"
+            try:
+                ser.write(data_str.encode('utf-8'))
+                print(f"Sent over serial: {data_str.strip()}")
+            except serial.SerialException as e:
+                print(f"Error sending data: {e}")
 
             if SHOW_PREVIEW:
                 cv.putText(frame, f"vx: {vx:6.2f} px/s   vy: {vy:6.2f} px/s",

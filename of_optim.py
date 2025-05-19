@@ -10,8 +10,8 @@ REFRESH_EVERY = 60
 SHUTTER_US = 8000           # < 8333 µs for 120 fps
 GAIN = 4.0                  # raise if image dark
 
-SERIAL_PORT = "/dev/ttyAMA1"
-BAUD = 921600
+SERIAL_PORT = "/dev/ttyAMA0"
+BAUD = 115200
 # ------------------------------------------------------------
 
 # ---------- Serial setup ----------

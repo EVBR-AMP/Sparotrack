@@ -1,0 +1,7 @@
+	Start script on boot file:
+Name: 		of_optim.service
+Directory: 	cd /etc/systemd/system/
+Edit:		sudo nano of_optim.service
+Reload:		sudo systemctl daemon-reload
+Stop:		sudo systemctl stop of_optim.service
+Status: 	sudo systemctl status of_optim.service

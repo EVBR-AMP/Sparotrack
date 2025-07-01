@@ -9,7 +9,7 @@ BAUD_RATE     = 921600
 RESOLUTION    = (800, 450)         # Lower resolution
 MAX_CORNERS   = 80                 # Fewer points to track
 REFRESH_EVERY = 60                 # More frequent reseeds
-SHOW_PREVIEW  = True
+SHOW_PREVIEW  = False
 WINDOW_NAME   = "PiCam2 Optical Flow"
 
 # ---------- graceful exit ----------
@@ -60,7 +60,7 @@ while True:
         now = time.perf_counter()
         dt = now - prev_time
         if dt > 0:
-            vy, vx = dx / dt, dy / dt
+            vy, vx = -dx / dt, dy / dt
             data_str = f"{vx:.2f},{vy:.1f}\n"
             try:
                 ser.write(data_str.encode('utf-8'))

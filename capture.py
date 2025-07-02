@@ -8,6 +8,11 @@ picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(
         main={"format": "BGR888", "size": (1920, 1080)}))
 picam2.start()
+picam2.set_controls({
+"AeEnable": False,        # turn off auto exposure/gain
+"ExposureTime": 4000,     # µs
+"AnalogueGain": 6.7,      # ×
+})
 
 print("SPACE = capture   ESC = quit")
 counter = 0

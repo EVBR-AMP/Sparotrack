@@ -63,8 +63,18 @@ def rotation_matrix_to_euler(R: np.ndarray) -> np.ndarray:
 # 4. ArUco detector setup
 # ---------------------------------------------------------------------
 dictionary  = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-parameters  = cv2.aruco.DetectorParameters()
-detector    = cv2.aruco.ArucoDetector(dictionary, parameters)
+params  = cv2.aruco.DetectorParameters()
+params.minMarkerPerimeterRate = 0.04   # default 0.03
+params.maxMarkerPerimeterRate = 4.0    # just in case you also see giant blobs
+params.minMarkerDistanceRate   = 0.05  # reject overlapping blobs
+params.minCornerDistanceRate   = 0.05
+params.minDistanceToBorder     = 3     # px; 0 = accept at the very edge
+params.adaptiveThreshWinSizeMin  = 15   # default 3
+params.adaptiveThreshWinSizeMax  = 55   # default 23
+params.adaptiveThreshWinSizeStep = 10   # default 10 is fine
+params.adaptiveThreshConstant    = 7    # tweak ±2–3 until dots vanish
+
+detector    = cv2.aruco.ArucoDetector(dictionary, params)
 
 # ---------------------------------------------------------------------
 # 5. Initialise camera and serial port

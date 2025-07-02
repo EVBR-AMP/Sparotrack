@@ -138,7 +138,7 @@ while True:
 
             payload = f"{x_cm:.1f},{y_cm:.1f},{yaw:.1f}\n"
             try:
-                ser.write(payload.encode())
+                ser.write(payload.encode('utf-8'))
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
             

@@ -6,7 +6,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(
-        main={"format": "BGR888", "size": (1920, 1080)}))
+        main={"format": "BGR888", "size": (1456, 1088)}))
 picam2.start()
 picam2.set_controls({
 "AeEnable": False,        # turn off auto exposure/gain

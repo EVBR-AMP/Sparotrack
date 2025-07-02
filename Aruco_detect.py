@@ -73,7 +73,7 @@ try:
     picam2 = Picamera2()
     picam2.configure(
         picam2.create_preview_configuration(
-            main={"format": "BGR888", "size": (640, 480)}
+            main={"format": "BGR888", "size": (1456, 1088)}
         )
     )
     picam2.start()

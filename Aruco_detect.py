@@ -77,6 +77,11 @@ try:
         )
     )
     picam2.start()
+    picam2.set_controls({
+    "AeEnable": False,        # turn off auto exposure/gain
+    "ExposureTime": 4000,     # µs
+    "AnalogueGain": 6.7,      # ×
+    })
 except Exception as e:
     sys.exit(f"❌  Could not open camera: {e}")
 

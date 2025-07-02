@@ -113,21 +113,21 @@ while True:
                 continue
 
             R, _ = cv2.Rodrigues(rvec)
-            R_inv = R.T
-            t_inv = -R_inv @ tvec
 
-            t_cm = t_inv * 100.0
-            euler = rotation_matrix_to_euler(R_inv)
+            t_cm = tvec * 100.0
 
-            x_cm = -t_cm[0][0]
+            x_cm =  t_cm[0][0]
             y_cm =  t_cm[1][0]
-            yaw  = -euler[2]
+            euler = rotation_matrix_to_euler(R)
+            yaw  =  euler[2]
 
             payload = f"{x_cm:.1f},{y_cm:.1f},{yaw:.1f}\n"
             try:
                 ser.write(payload.encode())
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
+            
+            print(f"Marker at  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
 
             pose_texts.append(
                 f"X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°"

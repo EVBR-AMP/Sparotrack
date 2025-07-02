@@ -77,19 +77,25 @@ while True:
     frame = picam2.capture_array("main")
 
     # ----- UI: read sliders -----
-    auto_exp_enabled_new = cv2.getTrackbarPos("Auto Exp", window) == 1
-    exposure_slider = cv2.getTrackbarPos("Exposure (µs)", window)
-    gain_slider = cv2.getTrackbarPos("Gain (×10)", window)
+    # auto_exp_enabled_new = cv2.getTrackbarPos("Auto Exp", window) == 1
+    # exposure_slider = cv2.getTrackbarPos("Exposure (µs)", window)
+    # gain_slider = cv2.getTrackbarPos("Gain (×10)", window)
 
-    if auto_exp_enabled_new != auto_exp_enabled:
-        auto_exp_enabled = auto_exp_enabled_new
-        picam2.set_controls({"AeEnable": auto_exp_enabled})
+    # if auto_exp_enabled_new != auto_exp_enabled:
+    #     auto_exp_enabled = auto_exp_enabled_new
+    #     picam2.set_controls({"AeEnable": auto_exp_enabled})
 
-    if not auto_exp_enabled:
-        picam2.set_controls({
-            "ExposureTime": int(exposure_slider),
-            "AnalogueGain": gain_slider / 10.0,
-        })
+    # if not auto_exp_enabled:
+    #     picam2.set_controls({
+    #         "ExposureTime": int(exposure_slider),
+    #         "AnalogueGain": gain_slider / 10.0,
+    #     })
+
+    picam2.set_controls({
+    "AeEnable": False,        # turn off auto exposure/gain
+    "ExposureTime": 4000,     # µs
+    "AnalogueGain": 6.7,      # ×
+    })
 
     cv2.imshow(window, frame)
     key = cv2.waitKey(1) & 0xFF

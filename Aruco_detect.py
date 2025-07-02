@@ -142,11 +142,11 @@ while True:
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
             
-            print(f"Marker at  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
+            # print(f"Marker at  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
 
-            pose_texts.append(
-                f"X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°"
-            )
+            # pose_texts.append(
+            #     f"X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°"
+            # )
 
     #         cv2.drawFrameAxes(
     #             frame, camera_matrix, dist_coeffs, rvec, tvec, 0.1

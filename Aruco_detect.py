@@ -80,17 +80,23 @@ detector    = cv2.aruco.ArucoDetector(dictionary, params)
 # 5. Initialise camera and serial port
 # ---------------------------------------------------------------------
 try:
+    FPS = 56                                   # target frame-rate
+    FRAME_DURATION = int(1_000_000 / FPS)      # µs  ➜ 17 857
+
     picam2 = Picamera2()
-    picam2.configure(
-        picam2.create_preview_configuration(
-            main={"format": "BGR888", "size": (1456, 1088)}
-        )
+
+    cfg = picam2.create_preview_configuration(
+        sensor={'output_size': (2304, 1296)},      # 2×2 bin, full sensor
+        main={'format': 'BGR888', 'size': (1152, 648)}  # 16:9, half-scale
     )
+    picam2.configure(cfg)
     picam2.start()
+
     picam2.set_controls({
-    "AeEnable": False,        # turn off auto exposure/gain
-    "ExposureTime": 4000,     # µs
-    "AnalogueGain": 6.7,      # ×
+        "FrameDurationLimits": (FRAME_DURATION, FRAME_DURATION),  # lock fps
+        "AeEnable": False,        # turn off auto exposure/gain
+        "ExposureTime": 4000,     # µs   (must be ≤ FRAME_DURATION)
+        "AnalogueGain": 6.7,      # ×
     })
 except Exception as e:
     sys.exit(f"❌  Could not open camera: {e}")

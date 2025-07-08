@@ -148,32 +148,32 @@ while True:
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
             
-            # print(f"Marker at  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
+            print(f"Marker at  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
 
-            # pose_texts.append(
-            #     f"X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°"
-            # )
+            pose_texts.append(
+                f"X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°"
+            )
 
-    #         cv2.drawFrameAxes(
-    #             frame, camera_matrix, dist_coeffs, rvec, tvec, 0.1
-    #         )
+            cv2.drawFrameAxes(
+                frame, camera_matrix, dist_coeffs, rvec, tvec, 0.1
+            )
 
-    #     cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    # for i, text in enumerate(pose_texts):
-    #     cv2.putText(
-    #         frame,
-    #         text,
-    #         (10, 20 + 20 * i),
-    #         cv2.FONT_HERSHEY_SIMPLEX,
-    #         0.5,
-    #         (0, 255, 0),
-    #         1,
-    #     )
+    for i, text in enumerate(pose_texts):
+        cv2.putText(
+            frame,
+            text,
+            (10, 20 + 20 * i),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 255, 0),
+            1,
+        )
 
-    # cv2.imshow("Frame", frame)
-    # if cv2.waitKey(1) & 0xFF == ord("q"):
-    #     break
+    cv2.imshow("Frame", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 
 # ---------------------------------------------------------------------
 # 7. Cleanup

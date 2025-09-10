@@ -194,14 +194,14 @@ while True:
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
 
-            print(f"(0,0) pose  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
-            pose_texts.append(f"Midpoint X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
+            # print(f"(0,0) pose  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
+            # pose_texts.append(f"Midpoint X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
 
-            # Draw axes at the board origin (midpoint)
-            try:
-                cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
-            except Exception:
-                pass
+            # # Draw axes at the board origin (midpoint)
+            # try:
+                # cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
+            # except Exception:
+                # pass
 
     # --- Fallback: only one tag visible → shift to board origin ---
     if not have_pose and ids is not None:
@@ -237,30 +237,30 @@ while True:
                 except serial.SerialException as e:
                     print(f"Serial write error: {e}")
 
-                print(f"(0,0) (fallback via id {idx})  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
-                pose_texts.append(f"Midpoint (id {idx}) X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
+                # print(f"(0,0) (fallback via id {idx})  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
+                # pose_texts.append(f"Midpoint (id {idx}) X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
 
-                # Draw axes at the inferred board origin
-                try:
-                    cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
-                except Exception:
-                    pass
-                break  # stop after first valid fallback
+                # # Draw axes at the inferred board origin
+                # try:
+                    # cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
+                # except Exception:
+                    # pass
+                # break  # stop after first valid fallback
 
-    # Draw detections
-    if ids is not None and len(ids) > 0:
-        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+    # # Draw detections
+    # if ids is not None and len(ids) > 0:
+        # cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    # OSD text
-    for i, text in enumerate(pose_texts):
-        cv2.putText(
-            frame, text, (10, 20 + 20 * i),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1
-        )
+    # # OSD text
+    # for i, text in enumerate(pose_texts):
+        # cv2.putText(
+            # frame, text, (10, 20 + 20 * i),
+            # cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1
+        # )
 
-    cv2.imshow("Frame", frame)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+    # cv2.imshow("Frame", frame)
+    # if cv2.waitKey(1) & 0xFF == ord("q"):
+        # break
 
 # ---------------------------------------------------------------------
 # 7. Cleanup

@@ -34,8 +34,8 @@ half = marker_length / 2.0
 # Board layout (origin at midpoint between markers)
 # Centers in METRES in the board frame:
 # left id=0 at (0, -0.0725), right id=1 at (0, +0.0725)
-c0 = np.array([0.0, -0.0725, 0.0], dtype=np.float32)
-c1 = np.array([0.0,  0.0725, 0.0], dtype=np.float32)
+c0 = np.array([0.12, -0.0725, 0.0], dtype=np.float32)
+c1 = np.array([0.12,  0.0725, 0.0], dtype=np.float32)
 
 def corners_from_center(center):
     cx, cy, cz = center
@@ -59,8 +59,8 @@ single_marker_points = np.array(
 
 # Offsets from each marker center to the BOARD origin (metres)
 offset_to_board_from = {
-    0: np.array([0.0,  +0.0725, 0.0], dtype=np.float32),  # from id 0 center to (0,0)
-    1: np.array([0.0,  -0.0725, 0.0], dtype=np.float32),  # from id 1 center to (0,0)
+    0: np.array([0.12,  +0.0725, 0.0], dtype=np.float32),  # from id 0 center to (0,0)
+    1: np.array([0.12,  -0.0725, 0.0], dtype=np.float32),  # from id 1 center to (0,0)
 }
 
 # ---------------------------------------------------------------------

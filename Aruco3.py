@@ -41,7 +41,7 @@ MARKER_SIZES = {
 # Centers in METRES in the BOARD frame:
 c0 = np.array([-0.07, 0.12, 0.0], dtype=np.float32)
 c1 = np.array([ 0.07, 0.12, 0.0], dtype=np.float32)
-c2 = np.array([ 0.03, 0.00, 0.0], dtype=np.float32)  # id=2 location (NEW)
+c2 = np.array([ -0.045, 0.02, 0.0], dtype=np.float32)  # id=2 location (NEW)
 
 CENTERS = {0: c0, 1: c1, 2: c2}
 

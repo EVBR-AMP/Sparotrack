@@ -27,17 +27,26 @@ except (FileNotFoundError, KeyError, yaml.YAMLError) as e:
 SERIAL_PORT = '/dev/ttyAMA0'   # UART device
 BAUD_RATE   = 115200           # Baud rate
 
-# Marker geometry (metres)
-marker_length = 0.10                     # 10 cm square
-half = marker_length / 2.0
+# ---------------------------------------------------------------------
+# 2a. Board & marker geometry (metres)
+# ---------------------------------------------------------------------
+# Per-marker sizes in METRES
+MARKER_SIZES = {
+    0: 0.10,  # 100 mm
+    1: 0.10,  # 100 mm
+    2: 0.03,  #  30 mm  (NEW)
+}
 
-# Board layout (origin at midpoint between markers)
-# Centers in METRES in the board frame:
-# left id=0 at (0, -0.0725), right id=1 at (0, +0.0725)
+# Board layout (origin at your chosen board origin)
+# Centers in METRES in the BOARD frame:
 c0 = np.array([-0.07, 0.12, 0.0], dtype=np.float32)
-c1 = np.array([0.07,  0.12, 0.0], dtype=np.float32)
+c1 = np.array([ 0.07, 0.12, 0.0], dtype=np.float32)
+c2 = np.array([ -0.045, 0.02, 0.0], dtype=np.float32)  # id=2 location (NEW)
 
-def corners_from_center(center):
+CENTERS = {0: c0, 1: c1, 2: c2}
+
+def corners_from_center(center, marker_length):
+    half = marker_length / 2.0
     cx, cy, cz = center
     return np.array([
         [cx - half, cy - half, cz],
@@ -46,22 +55,18 @@ def corners_from_center(center):
         [cx - half, cy + half, cz],
     ], dtype=np.float32)
 
-# Per-marker corner model for SINGLE-marker PnP (origin at the marker center)
-single_marker_points = np.array(
-    [
+def single_marker_points_for(marker_length):
+    half = marker_length / 2.0
+    return np.array([
         [-half, -half, 0.0],
         [ half, -half, 0.0],
         [ half,  half, 0.0],
         [-half,  half, 0.0],
-    ],
-    dtype=np.float32,
-)
+    ], dtype=np.float32)
 
-# Offsets from each marker center to the BOARD origin (metres)
-offset_to_board_from = {
-    0: np.array([0.0,  0.0, 0.0], dtype=np.float32),  # from id 0 center to (0,0)
-    1: np.array([0.0,  0.0, 0.0], dtype=np.float32),  # from id 1 center to (0,0)
-}
+# Vector from each marker center to the BOARD origin, expressed in the marker frame.
+# If all markers are axis-aligned with the board (typical), this equals -center.
+offset_to_board_from = {i: (-CENTERS[i]).astype(np.float32) for i in CENTERS}
 
 # ---------------------------------------------------------------------
 # 3. Helpers
@@ -81,12 +86,12 @@ def rotation_matrix_to_euler(R: np.ndarray) -> np.ndarray:
     return np.degrees([x, y, z])
 
 # ---------------------------------------------------------------------
-# 4. ArUco detector + BOARD definition (origin at midpoint)
+# 4. ArUco detector + BOARD definition (origin at your board origin)
 # ---------------------------------------------------------------------
 dictionary  = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
 params  = cv2.aruco.DetectorParameters()
-params.minMarkerPerimeterRate = 0.04
+params.minMarkerPerimeterRate = 0.02   # more permissive for small markers
 params.maxMarkerPerimeterRate = 4.0
 params.minMarkerDistanceRate   = 0.05
 params.minCornerDistanceRate   = 0.05
@@ -98,9 +103,11 @@ params.adaptiveThreshConstant    = 7
 
 detector = cv2.aruco.ArucoDetector(dictionary, params)
 
-# Custom board with origin at (0,0,0) midway between the markers
-objPoints = [corners_from_center(c0), corners_from_center(c1)]
-ids_board = np.array([0, 1], dtype=np.int32)
+# Custom board with origin at (0,0,0)
+objPoints = [
+    corners_from_center(CENTERS[i], MARKER_SIZES[i]) for i in (0, 1, 2)
+]
+ids_board = np.array([0, 1, 2], dtype=np.int32)
 
 # OpenCV has two APIs depending on version; try both.
 try:
@@ -171,7 +178,7 @@ while True:
     pose_texts = []
     have_pose = False
 
-    # --- Primary: fuse BOTH markers as a board (origin at midpoint) ---
+    # --- Primary: fuse visible markers as a board (origin at board origin) ---
     if ids is not None and len(ids) > 0:
         try:
             ok, rvec_board, tvec_board = cv2.aruco.estimatePoseBoard(
@@ -194,20 +201,18 @@ while True:
             except serial.SerialException as e:
                 print(f"Serial write error: {e}")
 
-            # print(f"(0,0) pose  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
-            # pose_texts.append(f"Midpoint X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
-
-            # # Draw axes at the board origin (midpoint)
-            # try:
-                # cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
-            # except Exception:
-                # pass
+            # Draw axes at the board origin (optional)
+            try:
+                cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
+            except Exception:
+                pass
 
     # --- Fallback: only one tag visible → shift to board origin ---
     if not have_pose and ids is not None:
         ids_list = ids.flatten().tolist()
         for idx, marker_corners in zip(ids_list, corners):
-            if idx in (0, 1):
+            if idx in MARKER_SIZES:  # accepts 0, 1, or 2
+                single_marker_points = single_marker_points_for(MARKER_SIZES[idx])
                 success, rvec_m, tvec_m = cv2.solvePnP(
                     single_marker_points,
                     marker_corners[0],
@@ -237,30 +242,29 @@ while True:
                 except serial.SerialException as e:
                     print(f"Serial write error: {e}")
 
-                # print(f"(0,0) (fallback via id {idx})  X={x_cm:.1f} cm  Y={y_cm:.1f} cm  Yaw={yaw:.1f}°")
-                # pose_texts.append(f"Midpoint (id {idx}) X[{x_cm:.1f}] cm  Y[{y_cm:.1f}] cm  Yaw[{yaw:.1f}]°")
+                # Draw axes at the inferred board origin (optional)
+                try:
+                    cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
+                except Exception:
+                    pass
 
-                # # Draw axes at the inferred board origin
-                # try:
-                    # cv2.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec_board, tvec_board, 0.1)
-                # except Exception:
-                    # pass
-                # break  # stop after first valid fallback
+                break  # (optional) stop after first valid fallback
 
-    # # Draw detections
-    # if ids is not None and len(ids) > 0:
-        # cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+    # Draw detections (optional)
+    if ids is not None and len(ids) > 0:
+        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    # # OSD text
-    # for i, text in enumerate(pose_texts):
-        # cv2.putText(
-            # frame, text, (10, 20 + 20 * i),
-            # cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1
-        # )
+    # OSD text (optional)
+    for i, text in enumerate(pose_texts):
+        cv2.putText(
+            frame, text, (10, 20 + 20 * i),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1
+        )
 
-    # cv2.imshow("Frame", frame)
-    # if cv2.waitKey(1) & 0xFF == ord("q"):
-        # break
+    # Preview (optional)
+    cv2.imshow("Frame", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 
 # ---------------------------------------------------------------------
 # 7. Cleanup

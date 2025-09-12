@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Full-state log viewer  (rev D)
+Full-state log viewer  (rev E)
 
 CSV header expected (case/space tolerant):
-    t_us, Position.x, Position.y, Height, Heading, cam_updated,
-    Velocity.x, Velocity.y, OF_raw, Omega.z, u_x, u_y, u_yaw
+    t_us, Position.x, Position.y, Height, Heading,
+    Velocity.x, Velocity.y, OF_raw, Omega.z,
+    u_x, u_x_pv, u_x_iv, u_x_ff,
+    u_y, u_y_pv, u_y_iv, u_y_ff, u_yaw
 """
 
 from pathlib import Path
@@ -34,7 +36,8 @@ def load_csv(path: Path) -> pd.DataFrame:
         "t_us",
         "position_x", "position_y", "height", "heading",
         "velocity_x", "velocity_y", "of_raw", "omega_z",
-        "u_x", "u_y", "u_yaw"
+        "u_x", "u_x_pv", "u_x_iv", "u_x_ff",
+        "u_y", "u_y_pv", "u_y_iv", "u_y_ff", "u_yaw",
     ]
 
     # ensure required time column present
@@ -51,14 +54,10 @@ def load_csv(path: Path) -> pd.DataFrame:
 
     # numeric coercion (silently turn bad data into NaN)
     for col in expected:
-        if col == "t_us":
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-        else:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
     # drop rows without a timestamp
     df = df.dropna(subset=["t_us"]).reset_index(drop=True)
-
     if df.empty:
         return pd.DataFrame()
 
@@ -95,6 +94,8 @@ app.layout = dbc.Container(
         dcc.Graph(id="pos-fig",  style={"height": 320}),
         dcc.Graph(id="rate-fig", style={"height": 300, "marginTop": "10px"}),
         dcc.Graph(id="ctrl-fig", style={"height": 300, "marginTop": "10px"}),
+        dcc.Graph(id="uxcomp-fig", style={"height": 280, "marginTop": "10px"}),
+        dcc.Graph(id="uycomp-fig", style={"height": 280, "marginTop": "10px"}),
     ],
     fluid=True,
 )
@@ -103,9 +104,11 @@ app.layout = dbc.Container(
 @app.callback(
     [
         Output("file-info", "children"),
-        Output("pos-fig",  "figure"),
-        Output("rate-fig", "figure"),
-        Output("ctrl-fig", "figure"),
+        Output("pos-fig",     "figure"),
+        Output("rate-fig",    "figure"),
+        Output("ctrl-fig",    "figure"),
+        Output("uxcomp-fig",  "figure"),
+        Output("uycomp-fig",  "figure"),
     ],
     Input("file-dd", "value"),
     prevent_initial_call=False,
@@ -121,22 +124,23 @@ def update_dash(file_path):
             xaxis_visible=False,
             yaxis_visible=False
         )
-        return "Empty or malformed log.", blank, blank, blank
+        return "Empty or malformed log.", blank, blank, blank, blank, blank
 
-    # Which expected columns are fully missing in source?
-    expected = [
+    # Which expected columns are fully missing in source (all-NaN)?
+    expected_non_time = [
         "position_x", "position_y", "height", "heading",
         "velocity_x", "velocity_y", "of_raw", "omega_z",
-        "u_x", "u_y", "u_yaw"
+        "u_x", "u_x_pv", "u_x_iv", "u_x_ff",
+        "u_y", "u_y_pv", "u_y_iv", "u_y_ff", "u_yaw",
     ]
-    missing = [c for c in expected if c not in df.columns or df[c].isna().all()]
+    missing = [c for c in expected_non_time if df[c].isna().all()]
 
     # ---------- Fig 1 : position + heading --------------------------
     pos = go.Figure()
     add_line(pos, df["t"], df["position_x"], "X (m)")
     add_line(pos, df["t"], df["position_y"], "Y (m)")
     add_line(pos, df["t"], df["height"],      "Height (m)")
-    # Heading on secondary axis (whatever unit the log uses)
+    # Heading on secondary axis
     add_line(pos, df["t"], df["heading"],     "Heading", yaxis="y2")
     pos.update_layout(
         title="Position & Heading",
@@ -161,7 +165,7 @@ def update_dash(file_path):
         legend=dict(orientation="h", y=1.05, x=0),
     )
 
-    # ---------- Fig 3 : controller outputs --------------------------
+    # ---------- Fig 3 : controller outputs (summed) -----------------
     ctrl = go.Figure()
     add_line(ctrl, df["t"], df["u_x"],   "u_x")
     add_line(ctrl, df["t"], df["u_y"],   "u_y")
@@ -174,12 +178,38 @@ def update_dash(file_path):
         legend=dict(orientation="h", y=1.05, x=0),
     )
 
+    # ---------- Fig 4 : u_x components ------------------------------
+    uxcomp = go.Figure()
+    add_line(uxcomp, df["t"], df["u_x_pv"], "u_x_pv")
+    add_line(uxcomp, df["t"], df["u_x_iv"], "u_x_iv")
+    add_line(uxcomp, df["t"], df["u_x_ff"], "u_x_ff")
+    uxcomp.update_layout(
+        title="u_x components (PV / IV / FF)",
+        xaxis_title="time (s)",
+        yaxis_title="value",
+        margin=dict(l=50, r=50, t=60, b=40),
+        legend=dict(orientation="h", y=1.05, x=0),
+    )
+
+    # ---------- Fig 5 : u_y components ------------------------------
+    uycomp = go.Figure()
+    add_line(uycomp, df["t"], df["u_y_pv"], "u_y_pv")
+    add_line(uycomp, df["t"], df["u_y_iv"], "u_y_iv")
+    add_line(uycomp, df["t"], df["u_y_ff"], "u_y_ff")
+    uycomp.update_layout(
+        title="u_y components (PV / IV / FF)",
+        xaxis_title="time (s)",
+        yaxis_title="value",
+        margin=dict(l=50, r=50, t=60, b=40),
+        legend=dict(orientation="h", y=1.05, x=0),
+    )
+
     warn = f" — missing: {', '.join(missing)}" if missing else ""
     info = (
         f"{Path(file_path).name} — {len(df):,d} rows, "
         f"{df['t'].iloc[-1]:.1f} s duration{warn}"
     )
-    return info, pos, rate, ctrl
+    return info, pos, rate, ctrl, uxcomp, uycomp
 
 # ------------- run --------------------------------------------------
 if __name__ == "__main__":

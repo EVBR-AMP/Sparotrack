@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-Full-state log viewer  (rev D)
-
-CSV header expected (case/space tolerant):
-    t_us, Position.x, Position.y, Height, Heading, cam_updated,
-    Velocity.x, Velocity.y, OF_raw, Omega.z, u_x, u_y, u_yaw
+Full-state log viewer  (rev G) — for header:
+t_us, Position.x, Position.y, Height, Heading, Velocity.x, Velocity.y, OF_raw, Omega.z, u_x, u_y, u_yaw, m1, m2, m3, m4
 """
 
 from pathlib import Path
@@ -21,50 +18,42 @@ LOG_GLOB = "log_*.csv"
 
 # ------------- helpers ----------------------------------------------
 def load_csv(path: Path) -> pd.DataFrame:
-    # Read tolerant of oddities; skip bad lines rather than die
     df = pd.read_csv(path, engine="python", on_bad_lines="skip")
     if df.empty:
         return pd.DataFrame()
 
-    # normalize names: "Position.x" -> "position_x"
-    df.columns = [c.strip().replace(".", "_").lower() for c in df.columns]
+    # normalize names: dots/spaces -> underscores, lower-case
+    # e.g., "Position.x" -> "position_x", "OF_raw" -> "of_raw"
+    df.columns = [c.strip().replace(".", "_").replace(" ", "_").lower() for c in df.columns]
 
-    # expected columns for this dashboard
     expected = [
         "t_us",
         "position_x", "position_y", "height", "heading",
         "velocity_x", "velocity_y", "of_raw", "omega_z",
-        "u_x", "u_y", "u_yaw"
+        "u_x", "u_y", "u_yaw",
+        "m1", "m2", "m3", "m4",
     ]
 
-    # ensure required time column present
     if "t_us" not in df.columns:
         return pd.DataFrame()
 
-    # add any missing expected columns as NaN to avoid KeyError
+    # Add missing columns as NaN to avoid KeyError; keep fixed order
     for col in expected:
         if col not in df.columns:
             df[col] = np.nan
-
-    # keep only expected columns in fixed order
     df = df[expected]
 
-    # numeric coercion (silently turn bad data into NaN)
+    # numeric coercion
     for col in expected:
-        if col == "t_us":
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-        else:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # drop rows without a timestamp
+    # drop rows without timestamp
     df = df.dropna(subset=["t_us"]).reset_index(drop=True)
-
     if df.empty:
         return pd.DataFrame()
 
     # μs → s, relative to first sample
     df["t"] = (df["t_us"] - df["t_us"].iloc[0]) * 1e-6
-
     return df
 
 
@@ -75,26 +64,26 @@ def add_line(fig, x, y, name, **kw):
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-file_opts = [{"label": p.name, "value": str(p)}
-             for p in sorted(LOG_DIR.glob(LOG_GLOB))]
+file_opts = [{"label": p.name, "value": str(p)} for p in sorted(LOG_DIR.glob(LOG_GLOB))]
 if not file_opts:
     file_opts = [{"label": "⚠  No logs found", "value": ""}]
 
 app.layout = dbc.Container(
     [
-        html.H4("Full-State Dashboard", className="my-3"),
+        html.H4("Full-State Dashboard (rev G)", className="my-3"),
         dcc.Dropdown(
             id="file-dd",
             options=file_opts,
             value=file_opts[0]["value"],
             clearable=False,
             persistence=True,
-            style={"maxWidth": "480px"},
+            style={"maxWidth": "520px"},
         ),
         html.Small(id="file-info", className="d-block my-2 text-muted"),
-        dcc.Graph(id="pos-fig",  style={"height": 320}),
-        dcc.Graph(id="rate-fig", style={"height": 300, "marginTop": "10px"}),
-        dcc.Graph(id="ctrl-fig", style={"height": 300, "marginTop": "10px"}),
+        dcc.Graph(id="pos-fig",    style={"height": 320}),
+        dcc.Graph(id="rate-fig",   style={"height": 300, "marginTop": "10px"}),
+        dcc.Graph(id="ctrl-fig",   style={"height": 300, "marginTop": "10px"}),
+        dcc.Graph(id="motor-fig",  style={"height": 280, "marginTop": "10px"}),
     ],
     fluid=True,
 )
@@ -102,10 +91,11 @@ app.layout = dbc.Container(
 # ------------- callback ---------------------------------------------
 @app.callback(
     [
-        Output("file-info", "children"),
-        Output("pos-fig",  "figure"),
-        Output("rate-fig", "figure"),
-        Output("ctrl-fig", "figure"),
+        Output("file-info",  "children"),
+        Output("pos-fig",    "figure"),
+        Output("rate-fig",   "figure"),
+        Output("ctrl-fig",   "figure"),
+        Output("motor-fig",  "figure"),
     ],
     Input("file-dd", "value"),
     prevent_initial_call=False,
@@ -116,27 +106,23 @@ def update_dash(file_path):
 
     df = load_csv(Path(file_path))
     if df.empty:
-        blank = go.Figure().update_layout(
-            title="No data",
-            xaxis_visible=False,
-            yaxis_visible=False
-        )
-        return "Empty or malformed log.", blank, blank, blank
+        blank = go.Figure().update_layout(title="No data", xaxis_visible=False, yaxis_visible=False)
+        return "Empty or malformed log.", blank, blank, blank, blank
 
-    # Which expected columns are fully missing in source?
-    expected = [
+    # Track any fully-missing series (all-NaN) to warn user
+    expected_non_time = [
         "position_x", "position_y", "height", "heading",
         "velocity_x", "velocity_y", "of_raw", "omega_z",
-        "u_x", "u_y", "u_yaw"
+        "u_x", "u_y", "u_yaw",
+        "m1", "m2", "m3", "m4",
     ]
-    missing = [c for c in expected if c not in df.columns or df[c].isna().all()]
+    missing = [c for c in expected_non_time if df[c].isna().all()]
 
     # ---------- Fig 1 : position + heading --------------------------
     pos = go.Figure()
     add_line(pos, df["t"], df["position_x"], "X (m)")
     add_line(pos, df["t"], df["position_y"], "Y (m)")
     add_line(pos, df["t"], df["height"],      "Height (m)")
-    # Heading on secondary axis (whatever unit the log uses)
     add_line(pos, df["t"], df["heading"],     "Heading", yaxis="y2")
     pos.update_layout(
         title="Position & Heading",
@@ -147,7 +133,7 @@ def update_dash(file_path):
         legend=dict(orientation="h", y=1.05, x=0),
     )
 
-    # ---------- Fig 2 : velocity, raw OF, Ωz ------------------------
+    # ---------- Fig 2 : velocity, optical flow, yaw rate ------------
     rate = go.Figure()
     add_line(rate, df["t"], df["velocity_x"], "Vx (m/s)")
     add_line(rate, df["t"], df["velocity_y"], "Vy (m/s)")
@@ -161,7 +147,7 @@ def update_dash(file_path):
         legend=dict(orientation="h", y=1.05, x=0),
     )
 
-    # ---------- Fig 3 : controller outputs --------------------------
+    # ---------- Fig 3 : control outputs -----------------------------
     ctrl = go.Figure()
     add_line(ctrl, df["t"], df["u_x"],   "u_x")
     add_line(ctrl, df["t"], df["u_y"],   "u_y")
@@ -174,12 +160,23 @@ def update_dash(file_path):
         legend=dict(orientation="h", y=1.05, x=0),
     )
 
-    warn = f" — missing: {', '.join(missing)}" if missing else ""
-    info = (
-        f"{Path(file_path).name} — {len(df):,d} rows, "
-        f"{df['t'].iloc[-1]:.1f} s duration{warn}"
+    # ---------- Fig 4 : motor commands ------------------------------
+    motors = go.Figure()
+    add_line(motors, df["t"], df["m1"], "m1")
+    add_line(motors, df["t"], df["m2"], "m2")
+    add_line(motors, df["t"], df["m3"], "m3")
+    add_line(motors, df["t"], df["m4"], "m4")
+    motors.update_layout(
+        title="Motor commands",
+        xaxis_title="time (s)",
+        yaxis_title="PWM",
+        margin=dict(l=50, r=50, t=60, b=40),
+        legend=dict(orientation="h", y=1.05, x=0),
     )
-    return info, pos, rate, ctrl
+
+    warn = f" — missing: {', '.join(missing)}" if missing else ""
+    info = f"{Path(file_path).name} — {len(df):,d} rows, {df['t'].iloc[-1]:.1f} s duration{warn}"
+    return info, pos, rate, ctrl, motors
 
 # ------------- run --------------------------------------------------
 if __name__ == "__main__":

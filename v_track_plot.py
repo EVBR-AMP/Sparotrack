@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Full-state log viewer  (rev G) — for header:
-t_us, Position.x, Position.y, Height, Heading, Velocity.x, Velocity.y, OF_raw_x, OF_raw_y, Omega.z, u_x, u_y, u_yaw, m1, m2, m3, m4
+t_us, Position.x, Position.y, Height, Heading, Velocity.x, Velocity.y, u_vx, u_vy, Omega.z, u_x, u_y, u_yaw, m1, m2, m3, m4
 """
 
 from pathlib import Path
@@ -29,7 +29,7 @@ def load_csv(path: Path) -> pd.DataFrame:
     expected = [
         "t_us",
         "position_x", "position_y", "height", "heading",
-        "velocity_x", "velocity_y", "of_raw_x", "of_raw_y", "omega_z",
+        "velocity_x", "velocity_y", "u_vx", "u_vy", "omega_z",
         "u_x", "u_y", "u_yaw",
         "m1", "m2", "m3", "m4",
     ]
@@ -112,7 +112,7 @@ def update_dash(file_path):
     # Track any fully-missing series (all-NaN) to warn user
     expected_non_time = [
         "position_x", "position_y", "height", "heading",
-        "velocity_x", "velocity_y", "of_raw_x", "of_raw_y", "omega_z",
+        "velocity_x", "velocity_y", "u_vx", "u_vy", "omega_z",
         "u_x", "u_y", "u_yaw",
         "m1", "m2", "m3", "m4",
     ]
@@ -137,8 +137,8 @@ def update_dash(file_path):
     rate = go.Figure()
     add_line(rate, df["t"], df["velocity_x"], "Vx (m/s)")
     add_line(rate, df["t"], df["velocity_y"], "Vy (m/s)")
-    add_line(rate, df["t"], df["of_raw_x"],     "OF_raw_x")
-    add_line(rate, df["t"], df["of_raw_y"],     "OF_raw_y")
+    add_line(rate, df["t"], df["u_vx"],     "u_vx")
+    add_line(rate, df["t"], df["u_vy"],     "u_vy")
     add_line(rate, df["t"], df["omega_z"],    "Ωz (rad/s)")
     rate.update_layout(
         title="Velocity, optical flow & yaw rate",

@@ -32,16 +32,24 @@ BAUD_RATE   = 115200           # Baud rate
 # ---------------------------------------------------------------------
 # Per-marker sizes in METRES
 MARKER_SIZES = {
-    0: 0.10,  # 100 mm
-    1: 0.10,  # 100 mm
-    2: 0.03,  #  30 mm  (NEW)
+    # 0: 0.10,  # 100 mm
+    # 1: 0.10,  # 100 mm
+    # 2: 0.03,  #  30 mm  (NEW)
+    #HMC
+    0: 0.06,  # 60 mm
+    1: 0.06,  # 60 mm
+    2: 0.10,  #  100 mm  (NEW)
 }
 
 # Board layout (origin at your chosen board origin)
 # Centers in METRES in the BOARD frame:
-c0 = np.array([-0.07, 0.12, 0.0], dtype=np.float32)
-c1 = np.array([ 0.07, 0.12, 0.0], dtype=np.float32)
-c2 = np.array([ -0.045, 0.02, 0.0], dtype=np.float32)  # id=2 location (NEW)
+# c0 = np.array([-0.07, 0.12, 0.0], dtype=np.float32)
+# c1 = np.array([ 0.07, 0.12, 0.0], dtype=np.float32)
+# c2 = np.array([ -0.045, 0.02, 0.0], dtype=np.float32)  # id=2 location (NEW)
+
+c0 = np.array([-0.0525, 0.12, 0.0], dtype=np.float32)
+c1 = np.array([ 0.0525, 0.12, 0.0], dtype=np.float32)
+c2 = np.array([ 0.0, 0.0, 0.35], dtype=np.float32)  # id=2 location (NEW)
 
 CENTERS = {0: c0, 1: c1, 2: c2}
 

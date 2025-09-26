@@ -139,7 +139,7 @@ def update_dash(file_path):
     add_line(rate, df["t"], df["velocity_y"], "Vy (m/s)")
     add_line(rate, df["t"], df["of_raw_x"],     "OF_raw_x")
     add_line(rate, df["t"], df["of_raw_y"],     "OF_raw_y")
-    add_line(rate, df["t"], df["omega_z"],    "Ωz (rad/s)")
+    add_line(rate, df["t"], df["omega_z"],    "Ωx (rad/s)")
     rate.update_layout(
         title="Velocity, optical flow & yaw rate",
         xaxis_title="time (s)",
